@@ -83,6 +83,16 @@ namespace Cuttlefish.Properties {
         /// <summary>
         ///   Recherche une ressource localisée de type System.Drawing.Bitmap.
         /// </summary>
+        internal static System.Drawing.Bitmap Dune {
+            get {
+                object obj = ResourceManager.GetObject("Dune", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Recherche une ressource localisée de type System.Drawing.Bitmap.
+        /// </summary>
         internal static System.Drawing.Bitmap GridGenerator {
             get {
                 object obj = ResourceManager.GetObject("GridGenerator", resourceCulture);

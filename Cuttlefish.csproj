@@ -28,6 +28,7 @@
   </ItemGroup>
   
   <ItemGroup>
+    <None Remove="Exemples.pdf" />
     <None Remove="voronoi.txt" />
   </ItemGroup>
   
