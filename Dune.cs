@@ -68,7 +68,7 @@ namespace Cuttlefish
                 {
                     lines.Add(new LineCurve( pointList[j], pointList[j + 1]));
                 }
-                //Curve poly = Polyline.CreateByJoiningLines(lines, 0.0001, false)[0].ToPolylineCurve();
+                
                 Curve poly = PolylineCurve.JoinCurves(lines)[0];
 
 
