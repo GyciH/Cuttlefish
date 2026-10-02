@@ -18,7 +18,7 @@ namespace Cuttlefish
         public Attractor()
           : base("Attractor", "ATRK",
               "Attract points with curve",
-              "Cuttlefish", "Tansform")
+              "Cuttlefish", "Transform")
         {
         }
 
