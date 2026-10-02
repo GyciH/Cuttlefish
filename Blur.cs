@@ -17,7 +17,7 @@ namespace Cuttlefish
         public Blur()
           : base("Blur", "BLR",
               "Randomly move points",
-              "Cuttlefish", "Points")
+              "Cuttlefish", "Transform")
         {
         }
 
@@ -30,6 +30,7 @@ namespace Cuttlefish
             pManager.AddNumberParameter("BlurX", "Bx", "Factor X of blur.", GH_ParamAccess.item, 1.0);
             pManager.AddNumberParameter("BlurY", "By", "Factor Y of blur.", GH_ParamAccess.item, 1.0);
             pManager.AddNumberParameter("BlurZ", "Bz", "Factor Z of blur.", GH_ParamAccess.item, 0);
+            pManager.AddIntegerParameter("Seed", "S", "The seed of the random draw.", GH_ParamAccess.item, 0);
         }
 
         /// <summary>
@@ -53,13 +54,15 @@ namespace Cuttlefish
             DA.GetData(1, ref x);
             DA.GetData(2, ref y);
             DA.GetData(3, ref z);
+            int seed = 0;
+            DA.GetData(4, ref seed);
 
             var groups = points.Paths
                 .Select((path, index) => new { Path = path, Index = index })
                 .GroupBy(p => p.Path[0]);
 
             var result = new Grasshopper.DataTree<Point3d>();
-            Random rand = new Random();
+            Random rand = new Random(seed);
 
             foreach (var group in groups)
             {
