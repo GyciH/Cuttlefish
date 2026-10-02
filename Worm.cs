@@ -29,6 +29,7 @@ namespace Cuttlefish
         {
             pManager.AddGeometryParameter("Cells", "C", "The cells to generate worm.", GH_ParamAccess.list);
             pManager.AddCurveParameter("Head", "H", "The curves to start & end worms.", GH_ParamAccess.list);
+            pManager.AddIntegerParameter("Seed", "S", "The seed of the random draw.", GH_ParamAccess.item, 0);
         }
 
         /// <summary>
@@ -50,6 +51,8 @@ namespace Cuttlefish
 
             if (!DA.GetDataList(0, cellCurves)) return;
             if (!DA.GetDataList(1, head)) return;
+            int seed = 0;
+            DA.GetData(2, ref seed);
 
             // Les cellules arrivent en Curve : GH ne sait pas les caster directement en PolylineCurve.
             List<PolylineCurve> cells = new List<PolylineCurve>();
@@ -63,7 +66,7 @@ namespace Cuttlefish
 
             int branch1 = 0;
 
-            Random rand = new Random();
+            Random rand = new Random(seed);
             DataTree<Curve> curves = new DataTree<Curve>();
 
                 foreach ( PolylineCurve cell in cells)

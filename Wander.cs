@@ -27,6 +27,7 @@ namespace Cuttlefish
         {
             pManager.AddPointParameter("Points", "P", "The points to wander on, one branch per row.", GH_ParamAccess.tree);
             pManager.AddNumberParameter("Radius", "R", "The fillet radius at the corners.", GH_ParamAccess.item, 1);
+            pManager.AddIntegerParameter("Seed", "S", "The seed of the random draw.", GH_ParamAccess.item, 0);
         }
 
         /// <summary>
@@ -48,6 +49,8 @@ namespace Cuttlefish
 
             if (!DA.GetDataTree(0, out points)) return;
             if (!DA.GetData(1, ref rayon)) return;
+            int seed = 0;
+            DA.GetData(2, ref seed);
 
             List<List<Point3d>> rows = points.Branches
                 .Select(branch => branch.Where(p => p != null).Select(p => p.Value).ToList())
@@ -55,7 +58,7 @@ namespace Cuttlefish
 
             List<int> ids = new List<int> { -1, 0, 0, 1 };
             List<Curve> curves = new List<Curve>();
-            Random rand = new Random();
+            Random rand = new Random(seed);
             double tolerance = DocumentTolerance();
             bool shortNeighbour = false;
 
