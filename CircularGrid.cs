@@ -1,4 +1,4 @@
-﻿using Grasshopper.Kernel;
+using Grasshopper.Kernel;
 using Grasshopper.Kernel.Data;
 using Rhino.Geometry;
 using System;
@@ -24,8 +24,8 @@ namespace Cuttlefish
         protected override void RegisterInputParams(GH_Component.GH_InputParamManager pManager)
         {
             pManager.AddCircleParameter("Circle", "C", "The Circle to create the grid in.", GH_ParamAccess.list);
-            pManager.AddNumberParameter("Density by circle", "X", "Space betwen too points.", GH_ParamAccess.item, 10);
-            pManager.AddNumberParameter("Density of circle", "Y", "Space betwen too circles.", GH_ParamAccess.item, 10);
+            pManager.AddNumberParameter("Density by circle", "X", "The max space between two points on a circle.", GH_ParamAccess.item, 10);
+            pManager.AddNumberParameter("Density of circle", "Y", "The space between two circles.", GH_ParamAccess.item, 10);
         }
 
         /// <summary>
@@ -33,7 +33,7 @@ namespace Cuttlefish
         /// </summary>
         protected override void RegisterOutputParams(GH_Component.GH_OutputParamManager pManager)
         {
-            pManager.AddPointParameter("Points", "P", "Grid result", GH_ParamAccess.list);
+            pManager.AddPointParameter("Points", "P", "The points of the grid, one branch per circle {input circle; ring}, the center in ring 0.", GH_ParamAccess.tree);
         }
 
         /// <summary>
@@ -46,44 +46,38 @@ namespace Cuttlefish
             double ecartX = 10;
             double ecartY = 10;
 
-            DA.GetDataList(0, circle);
-            DA.GetData(1, ref ecartX);
-            DA.GetData(2, ref ecartY);
+            if (!DA.GetDataList(0, circle)) return;
+            if (!DA.GetData(1, ref ecartX)) return;
+            if (!DA.GetData(2, ref ecartY)) return;
 
+            if (ecartX <= 0 || ecartY <= 0)
+            {
+                AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "X and Y must be greater than 0.");
+                return;
+            }
+
+            const double eps = 1e-9;
             Grasshopper.DataTree<Point3d> pointsTree = new Grasshopper.DataTree<Point3d>();
 
             for (int p = 0; p < circle.Count; p++)
             {
-                List<List<Point3d>> points = new List<List<Point3d>>();
-                int divisionY = (int)circle[p].Radius/ (int)ecartY;
-                points.Add(new List<Point3d>());
+                // Le centre forme la rangée 0.
+                pointsTree.Add(circle[p].Center, new GH_Path(p, 0));
 
-                points[0].Add(circle[p].Center);
-                Circle previousCircle = circle[p];
+                int divisionY = (int)Math.Floor(circle[p].Radius / ecartY + eps);
 
-                for (int i = 1; i < divisionY; i++)
+                for (int i = 1; i <= divisionY; i++)
                 {
-                    Circle currentCircle = new Circle(previousCircle.Center, previousCircle.Radius + ecartY);
-                    List<double> param = new List<double>();
-                    bool boucle = false;
-                    double range = currentCircle.Circumference / ecartX;
+                    Circle currentCircle = new Circle(circle[p].Plane, ecartY * i);
+                    int divisionX = Math.Max(1, (int)Math.Ceiling(currentCircle.Circumference / ecartX - eps));
 
-                    while (boucle)
-                    {                        
-                        param.Add(range);
-                        range += ecartX;
-                        boucle = range < currentCircle.Circumference;
-                    }
-
-                    points.Add(new List<Point3d>());
-                    foreach (var par in param)
+                    List<Point3d> points = new List<Point3d>();
+                    for (int j = 0; j < divisionX; j++)
                     {
-                        points[i].Add(currentCircle.PointAt(par));
+                        points.Add(currentCircle.PointAt(2 * Math.PI * j / divisionX));
                     }
-                    pointsTree.AddRange(points[i]);
-                    
+                    pointsTree.AddRange(points, new GH_Path(p, i));
                 }
-
             }
             DA.SetDataTree(0, pointsTree);
         }
@@ -95,9 +89,8 @@ namespace Cuttlefish
         {
             get
             {
-                //You can add image files to your project resources and access them like this:
-                // return Resources.IconForThisComponent;
-                return null;
+                // Icône temporaire : celle de CreateGrid, en attendant une icône dédiée.
+                return Cuttlefish.Properties.Resources.GridGenerator;
             }
         }
 
