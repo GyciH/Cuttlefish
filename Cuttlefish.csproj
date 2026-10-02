@@ -19,7 +19,7 @@
     <Version>1.0</Version>
     <Title>Cuttlefish</Title>
     <Company>CJ-Developpement</Company>
-    <Description>Description of Cuttlefish</Description>
+    <Description>Graphic patterns in Grasshopper: point grids, transformations and drawing components.</Description>
     <BaseOutputPath>C:\Users\carol\AppData\Roaming\Grasshopper\Libraries</BaseOutputPath>
   </PropertyGroup>
   

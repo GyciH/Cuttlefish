@@ -13,7 +13,7 @@ namespace Cuttlefish
         public override Bitmap Icon => Cuttlefish.Properties.Resources.Icone;
 
         //Return a short string describing the purpose of this GHA library.
-        public override string Description => "";
+        public override string Description => "Graphic patterns in Grasshopper: point grids, transformations and drawing components (Voronoi, Truchet, maze, weave, contour lines...).";
 
         public override Guid Id => new Guid("4f000575-ea0d-45f7-bb20-2ca3c21a5379");
 
