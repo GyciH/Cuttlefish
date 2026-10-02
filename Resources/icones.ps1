@@ -34,6 +34,16 @@ public static class CuttlefishIcons
         d["Dune"]         = Make(Dune);
         d["Lining"]       = Make(Lining);
         d["Meshing"]      = Make(Meshing);
+        d["Truchet"]      = Make(Truchet);
+        d["Contour"]      = Make(Contour);
+        d["Pebble"]       = Make(Pebble);
+        d["Hatch"]        = Make(Hatch);
+        d["Delaunay"]     = Make(Delaunay);
+        d["Bubble"]       = Make(Bubble);
+        d["Flow"]         = Make(Flow);
+        d["Maze"]         = Make(Maze);
+        d["Spiral"]       = Make(Spiral);
+        d["Weave"]        = Make(Weave);
         d["Icone"]        = Make(Plugin);
         return d;
     }
@@ -214,6 +224,169 @@ public static class CuttlefishIcons
         for (int i = 0; i < 4; i++)
             for (int j = 0; j < 4; j++)
                 if ((i + j) % 2 == 0) Dot(g, Ink, 2.5f + 6.33f * i, 2.5f + 6.33f * j, 1.1f);
+    }
+
+    static void Truchet(Graphics g)
+    {
+        // Damier de 3x3 cases de 8 px, deux quarts de cercle par case.
+        bool[] flip = { false, true, true, true, false, false, false, true, false };
+        using (var p = P(Draw, 1.6f))
+            for (int i = 0; i < 3; i++)
+                for (int j = 0; j < 3; j++)
+                {
+                    float x = i * 8f, y = j * 8f;
+                    if (flip[i * 3 + j])
+                    {
+                        g.DrawArc(p, x + 4f, y - 4f, 8f, 8f, 90, 90);
+                        g.DrawArc(p, x - 4f, y + 4f, 8f, 8f, 270, 90);
+                    }
+                    else
+                    {
+                        g.DrawArc(p, x - 4f, y - 4f, 8f, 8f, 0, 90);
+                        g.DrawArc(p, x + 4f, y + 4f, 8f, 8f, 180, 90);
+                    }
+                }
+    }
+
+    static void Contour(Graphics g)
+    {
+        // Courbes de niveau emboîtées autour d'un point attracteur.
+        float[] r = { 3.5f, 6.5f, 9.5f };
+        for (int k = 0; k < r.Length; k++)
+            using (var p = P(k == 1 ? Draw : Ink, 1.2f))
+            {
+                var pts = new List<PointF>();
+                for (int a = 0; a < 24; a++)
+                {
+                    double t = Math.PI * 2 * a / 24;
+                    float rr = r[k] * (1f + 0.18f * (float)Math.Sin(3 * t + k));
+                    pts.Add(new PointF(11f + rr * 1.15f * (float)Math.Cos(t), 12.5f + rr * (float)Math.Sin(t)));
+                }
+                g.DrawClosedCurve(p, pts.ToArray(), 0.5f, FillMode.Alternate);
+            }
+        Dot(g, Draw, 11f, 12.5f, 1.4f);
+    }
+
+    static void Pebble(Graphics g)
+    {
+        using (var p = P(Muted, 0.8f)) VoronoiEdges(g, p);
+        using (var p = P(Draw, 1.6f))
+        {
+            g.DrawClosedCurve(p, new[] { new PointF(5f, 5f), new PointF(9f, 4.5f), new PointF(6f, 8f) }, 0.6f, FillMode.Alternate);
+            g.DrawClosedCurve(p, new[] { new PointF(10f, 11f), new PointF(13.5f, 10f), new PointF(13f, 13.5f), new PointF(10.5f, 14.5f) }, 0.6f, FillMode.Alternate);
+            g.DrawClosedCurve(p, new[] { new PointF(16.5f, 4.5f), new PointF(19.5f, 5f), new PointF(16.5f, 6.5f) }, 0.6f, FillMode.Alternate);
+            g.DrawClosedCurve(p, new[] { new PointF(4.5f, 12f), new PointF(7f, 12f), new PointF(8.5f, 15.5f), new PointF(5f, 16f) }, 0.6f, FillMode.Alternate);
+            g.DrawClosedCurve(p, new[] { new PointF(16f, 16f), new PointF(19.5f, 18.5f), new PointF(17f, 19.5f), new PointF(13.5f, 19f) }, 0.6f, FillMode.Alternate);
+        }
+    }
+
+    static void Hatch(Graphics g)
+    {
+        // Trois cellules, chacune hachurée dans sa propre direction.
+        var cells = new[]
+        {
+            new[] { new PointF(2.5f, 2.5f), new PointF(13f, 2.5f), new PointF(10f, 11f), new PointF(2.5f, 13f) },
+            new[] { new PointF(13f, 2.5f), new PointF(21.5f, 2.5f), new PointF(21.5f, 14f), new PointF(10f, 11f) },
+            new[] { new PointF(2.5f, 13f), new PointF(10f, 11f), new PointF(21.5f, 14f), new PointF(21.5f, 21.5f), new PointF(2.5f, 21.5f) },
+        };
+        float[] angles = { 45f, -20f, 80f };
+        for (int c = 0; c < cells.Length; c++)
+        {
+            var state = g.Save();
+            using (var path = new GraphicsPath())
+            {
+                path.AddPolygon(cells[c]);
+                g.SetClip(path);
+                g.TranslateTransform(12f, 12f);
+                g.RotateTransform(angles[c]);
+                using (var p = P(Draw, 1f))
+                    for (float t = -18f; t <= 18f; t += 3f) g.DrawLine(p, -20f, t, 20f, t);
+            }
+            g.Restore(state);
+            using (var p = P(Ink, 1f)) g.DrawPolygon(p, cells[c]);
+        }
+    }
+
+    static void Delaunay(Graphics g)
+    {
+        var pts = new[] { new PointF(3f, 3.5f), new PointF(12f, 2.5f), new PointF(21f, 4f), new PointF(8f, 11f), new PointF(16.5f, 12f),
+                          new PointF(3f, 19f), new PointF(12f, 21f), new PointF(21f, 19.5f) };
+        int[] tri = { 0, 1, 3,  1, 4, 3,  1, 2, 4,  0, 3, 5,  3, 6, 5,  3, 4, 6,  4, 7, 6,  2, 7, 4 };
+        using (var p = P(Ink, 1f))
+            for (int k = 0; k < tri.Length; k += 3)
+                g.DrawPolygon(p, new[] { pts[tri[k]], pts[tri[k + 1]], pts[tri[k + 2]] });
+        foreach (var q in pts) Dot(g, Draw, q.X, q.Y, 1.5f);
+    }
+
+    static void Bubble(Graphics g)
+    {
+        float[] c = { 6f, 6f, 4.5f,  15f, 5f, 4f,  20.5f, 11f, 2.5f,  11f, 13f, 3.5f,  5f, 17.5f, 4f,  16.5f, 18f, 4.5f };
+        using (var p = P(Draw, 1.4f))
+            for (int k = 0; k < c.Length; k += 3)
+                g.DrawEllipse(p, c[k] - c[k + 2], c[k + 1] - c[k + 2], 2 * c[k + 2], 2 * c[k + 2]);
+        for (int k = 0; k < c.Length; k += 3) Dot(g, Muted, c[k], c[k + 1], 0.8f);
+    }
+
+    static void Flow(Graphics g)
+    {
+        // Lignes de courant qui épousent une courbe guide.
+        using (var p = P(Ink, 1.6f)) Curve(g, p, 0.6f, 2f, 16f, 8f, 10f, 15f, 13f, 22f, 6f);
+        using (var p = P(Draw, 1.1f))
+            foreach (float dy in new[] { -9f, -4.5f, 4.5f, 9f })
+                Curve(g, p, 0.6f, 2f, 16f + dy, 8f, 10f + dy, 15f, 13f + dy, 22f, 6f + dy);
+    }
+
+    static void Maze(Graphics g)
+    {
+        using (var p = P(Ink, 1.6f))
+        {
+            Lines(g, p, 7f, 2.5f, 21.5f, 2.5f, 21.5f, 21.5f);
+            Lines(g, p, 17f, 21.5f, 2.5f, 21.5f, 2.5f, 2.5f);
+            Lines(g, p, 7f, 2.5f, 7f, 12f, 12f, 12f);
+            Lines(g, p, 12f, 7f, 17f, 7f, 17f, 17f);
+            Lines(g, p, 7f, 17f, 12f, 17f, 12f, 21.5f);
+            Lines(g, p, 2.5f, 7f, 4f, 7f);
+        }
+        Dot(g, Draw, 4.8f, 2.5f, 1.5f);
+        Dot(g, Draw, 19.2f, 21.5f, 1.5f);
+    }
+
+    static void Spiral(Graphics g)
+    {
+        using (var p = P(Draw, 1.6f))
+        {
+            var pts = new List<PointF>();
+            for (double t = 0; t < Math.PI * 6; t += 0.2)
+            {
+                float r = (float)(t / (Math.PI * 2) * 3.5);
+                pts.Add(new PointF(12f + r * (float)Math.Cos(t), 12f + r * (float)Math.Sin(t)));
+            }
+            g.DrawLines(p, pts.ToArray());
+        }
+        Dot(g, Ink, 12f, 12f, 1.3f);
+    }
+
+    static void Weave(Graphics g)
+    {
+        // Brins sarcelle verticaux, brins sombres horizontaux, dessus-dessous en damier.
+        float[] pos = { 5f, 12f, 19f };
+        using (var v = P(Draw, 2.6f))
+            foreach (float x in pos) g.DrawLine(v, x, 1.5f, x, 22.5f);
+        using (var h = P(Ink, 2.6f))
+            foreach (float y in pos) g.DrawLine(h, 1.5f, y, 22.5f, y);
+        using (var v = P(Draw, 2.6f))
+            for (int i = 0; i < 3; i++)
+                for (int j = 0; j < 3; j++)
+                    if ((i + j) % 2 == 0)
+                    {
+                        // Effacer le brin sombre autour du croisement, puis repasser le brin sarcelle.
+                        var old = g.CompositingMode;
+                        g.CompositingMode = CompositingMode.SourceCopy;
+                        using (var clear = new SolidBrush(Color.Transparent))
+                            g.FillRectangle(clear, pos[i] - 2.4f, pos[j] - 2.2f, 4.8f, 4.4f);
+                        g.CompositingMode = old;
+                        g.DrawLine(v, pos[i], pos[j] - 3f, pos[i], pos[j] + 3f);
+                    }
     }
 
     // ---------- Plugin ----------

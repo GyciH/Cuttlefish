@@ -151,4 +151,34 @@
   <data name="Worm" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\Worm.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
+  <data name="Truchet" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\Truchet.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="Contour" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\Contour.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="Pebble" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\Pebble.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="Hatch" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\Hatch.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="Delaunay" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\Delaunay.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="Bubble" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\Bubble.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="Flow" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\Flow.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="Maze" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\Maze.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="Spiral" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\Spiral.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="Weave" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\Weave.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
 </root>
