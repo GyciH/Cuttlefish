@@ -45,25 +45,29 @@ namespace Cuttlefish
         /// <param name="DA">The DA object is used to retrieve from inputs and store in outputs.</param>
         protected override void SolveInstance(IGH_DataAccess DA)
         {
-            List<PolylineCurve> cells = new List<PolylineCurve>();
+            List<Curve> cellCurves = new List<Curve>();
             List<Curve> head = new List<Curve>();
-            
-            DA.GetDataList(0, cells);
-            DA.GetDataList(1, head);
-            
-            int branch0 = 0;
+
+            if (!DA.GetDataList(0, cellCurves)) return;
+            if (!DA.GetDataList(1, head)) return;
+
+            // Les cellules arrivent en Curve : GH ne sait pas les caster directement en PolylineCurve.
+            List<PolylineCurve> cells = new List<PolylineCurve>();
+            foreach (Curve crv in cellCurves)
+            {
+                if (crv != null && crv.TryGetPolyline(out Polyline pl))
+                    cells.Add(new PolylineCurve(pl));
+                else
+                    AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "A cell is not a polyline and was skipped.");
+            }
+
             int branch1 = 0;
 
             Random rand = new Random();
             DataTree<Curve> curves = new DataTree<Curve>();
 
-
-            //foreach (List<PolylineCurve> cells in cellsList)
-            //{              
-
                 foreach ( PolylineCurve cell in cells)
                 {
-                    GH_Path currentBranche = new GH_Path(branch1);
 
                     List<Curve> edges = new List<Curve>();
                     List<Point3d> mids = new List<Point3d>();
@@ -101,11 +105,10 @@ namespace Cuttlefish
                     if (currentVect.Count % 2 == 1)
                     {
                         List<Curve> movedPin = MoveCurve(head, currentPt[0], currentVect[0]);
-                        GH_Path currentPath = new GH_Path(branchIndex);
 
                         foreach (Curve c in movedPin)
                         {
-                            int[] path = { branch0, branch1, branchIndex };
+                            int[] path = { branch1, branchIndex };
                             curves.Add(c, new GH_Path(path));
                         }
                         startIndex = 1;
@@ -115,7 +118,7 @@ namespace Cuttlefish
                     {
                         //curves.Add(new List<Curve>());
                         Curve c = CreateNurb(currentVect[j], currentVect[j + 1], currentPt[j], currentPt[j + 1], center);
-                        int[] path = {branch0, branch1, branchIndex };
+                        int[] path = { branch1, branchIndex };
 
                         curves.Add(c, new GH_Path(path));
                         branchIndex++;
@@ -123,8 +126,6 @@ namespace Cuttlefish
 
                     branch1++;
                 }
-                branch0++;
-            //}
             DA.SetDataTree(0, curves);
 
 
