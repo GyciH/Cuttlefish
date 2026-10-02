@@ -124,6 +124,9 @@
   <data name="Blur" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\Blur.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
+  <data name="CircularGrid" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\CircularGrid.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
   <data name="Dune" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\Dune.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
@@ -141,6 +144,9 @@
   </data>
   <data name="Voronoi" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\Voronoi.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="Wander" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\Wander.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
   <data name="Worm" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\Worm.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>

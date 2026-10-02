@@ -89,8 +89,7 @@ namespace Cuttlefish
         {
             get
             {
-                // Icône temporaire : celle de CreateGrid, en attendant une icône dédiée.
-                return Cuttlefish.Properties.Resources.GridGenerator;
+                return Cuttlefish.Properties.Resources.CircularGrid;
             }
         }
 

@@ -83,6 +83,16 @@ namespace Cuttlefish.Properties {
         /// <summary>
         ///   Recherche une ressource localisée de type System.Drawing.Bitmap.
         /// </summary>
+        internal static System.Drawing.Bitmap CircularGrid {
+            get {
+                object obj = ResourceManager.GetObject("CircularGrid", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+
+        /// <summary>
+        ///   Recherche une ressource localisée de type System.Drawing.Bitmap.
+        /// </summary>
         internal static System.Drawing.Bitmap Dune {
             get {
                 object obj = ResourceManager.GetObject("Dune", resourceCulture);
@@ -140,6 +150,16 @@ namespace Cuttlefish.Properties {
             }
         }
         
+        /// <summary>
+        ///   Recherche une ressource localisée de type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap Wander {
+            get {
+                object obj = ResourceManager.GetObject("Wander", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+
         /// <summary>
         ///   Recherche une ressource localisée de type System.Drawing.Bitmap.
         /// </summary>

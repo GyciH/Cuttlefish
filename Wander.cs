@@ -104,8 +104,7 @@ namespace Cuttlefish
         {
             get
             {
-                // Icône temporaire : celle de Worm, en attendant une icône dédiée.
-                return Cuttlefish.Properties.Resources.Worm;
+                return Cuttlefish.Properties.Resources.Wander;
             }
         }
 
