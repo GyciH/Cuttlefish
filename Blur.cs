@@ -117,10 +117,13 @@ namespace Cuttlefish
                             }
                             else if (i == 0 || i == points.PathCount - 1)
                             {
+                                // Le dernier point de la colonne reprend le décalage du premier :
+                                // la première et la dernière ligne restent identiques à la hauteur près.
+                                int k = (j == branch.Count - 1) ? 0 : j;
                                 newPt = new Point3d(
-                                    pt.X + ((randJoin[j] - 0.5) * x),
-                                    pt.Y + ((randJoin[j + 1] - 0.5) * y),
-                                    pt.Z + ((randJoin[j + 2] - 0.5) * z)
+                                    pt.X + ((randJoin[k] - 0.5) * x),
+                                    pt.Y + ((randJoin[k + 1] - 0.5) * y),
+                                    pt.Z + ((randJoin[k + 2] - 0.5) * z)
                                     );
                             }
                             else if (j == 0 || j == branch.Count - 1)
