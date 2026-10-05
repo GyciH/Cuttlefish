@@ -72,10 +72,13 @@ namespace Cuttlefish
                     
                 Vector3d vect = new Vector3d(points[ids[ids.Count - 1]][0].Value - points[ids[0]][0].Value);
 
+                // Décalages fixes des bords, identiques quel que soit le seed.
+                // Ramenés à la moitié de l'amplitude intérieure pour que les jonctions se voient moins.
+                const double amplitudeBord = 0.5;
                 List<double> randJoin = new List<double> { 2, 31, 76, 98, 7, 97, 56, 94, 71, 1, 36, 2, 76, 35, 63, 61, 52, 18, 38, 16 };
                 for (int i = 0; i < randJoin.Count; i++)
                 {
-                    randJoin[i] = randJoin[i] / 100;
+                    randJoin[i] = 0.5 + (randJoin[i] / 100 - 0.5) * amplitudeBord;
                 }
 
 
