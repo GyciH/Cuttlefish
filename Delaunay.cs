@@ -58,6 +58,11 @@ namespace Cuttlefish
                     AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "A group with less than 3 points was skipped.");
                     continue;
                 }
+                if (EstDegenere(pts))
+                {
+                    AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "A group whose points are aligned or merged in XY was skipped.");
+                    continue;
+                }
 
                 // Triangulation dans le plan XY ; les triangles gardent le Z des points.
                 Node2List nodes = new Node2List();
@@ -70,6 +75,40 @@ namespace Cuttlefish
             }
 
             DA.SetDataTree(0, result);
+        }
+
+        /// <summary>
+        /// Vrai quand les points, vus en plan XY, n'ont pas trois positions distinctes non alignees :
+        /// le solveur ne peut alors produire aucun triangle valable.
+        /// </summary>
+        private static bool EstDegenere(List<Point3d> pts)
+        {
+            double minX = double.MaxValue, minY = double.MaxValue, maxX = double.MinValue, maxY = double.MinValue;
+            foreach (Point3d p in pts)
+            {
+                minX = Math.Min(minX, p.X); maxX = Math.Max(maxX, p.X);
+                minY = Math.Min(minY, p.Y); maxY = Math.Max(maxY, p.Y);
+            }
+            double etendue = Math.Max(maxX - minX, maxY - minY);
+            if (etendue <= 0) return true;
+            double tol = etendue * 1e-9; // tolerance relative a la taille du nuage
+
+            Point3d a = pts[0];
+            int iB = -1;
+            for (int i = 1; i < pts.Count; i++)
+                if (Math.Abs(pts[i].X - a.X) > tol || Math.Abs(pts[i].Y - a.Y) > tol) { iB = i; break; }
+            if (iB < 0) return true;
+
+            Point3d b = pts[iB];
+            double dx = b.X - a.X, dy = b.Y - a.Y;
+            double longueur = Math.Sqrt(dx * dx + dy * dy);
+            for (int i = iB + 1; i < pts.Count; i++)
+            {
+                // Distance du point a la droite (a, b) en plan XY.
+                double d = Math.Abs(dx * (pts[i].Y - a.Y) - dy * (pts[i].X - a.X)) / longueur;
+                if (d > tol) return false;
+            }
+            return true;
         }
 
         /// <summary>

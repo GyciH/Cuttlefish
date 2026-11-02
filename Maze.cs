@@ -68,26 +68,32 @@ namespace Cuttlefish
                     for (int j = 0; j < ny; j++) { right[i, j] = true; up[i, j] = true; }
 
                 // Parcours en profondeur aléatoire : un arbre couvrant, donc un seul chemin entre deux cases.
-                var stack = new Stack<int[]>();
-                stack.Push(new[] { 0, 0 });
+                // Une case est codee i * ny + j ; les voisins libres vont dans un tableau fixe de 4 :
+                // aucune allocation par pas, meme sur une grande grille.
+                var stack = new Stack<int>(nx * ny);
+                stack.Push(0);
                 seen[0, 0] = true;
-                int[][] moves = { new[] { 1, 0 }, new[] { -1, 0 }, new[] { 0, 1 }, new[] { 0, -1 } };
+                int[] dirs = new int[4];
                 while (stack.Count > 0)
                 {
-                    int[] cell = stack.Peek();
-                    var next = moves
-                        .Select(m => new[] { cell[0] + m[0], cell[1] + m[1], m[0], m[1] })
-                        .Where(c => c[0] >= 0 && c[1] >= 0 && c[0] < nx && c[1] < ny && !seen[c[0], c[1]])
-                        .ToList();
-                    if (next.Count == 0) { stack.Pop(); continue; }
+                    int ci = stack.Peek() / ny, cj = stack.Peek() % ny;
+                    int count = 0;
+                    if (ci + 1 < nx && !seen[ci + 1, cj]) dirs[count++] = 0;
+                    if (ci > 0 && !seen[ci - 1, cj]) dirs[count++] = 1;
+                    if (cj + 1 < ny && !seen[ci, cj + 1]) dirs[count++] = 2;
+                    if (cj > 0 && !seen[ci, cj - 1]) dirs[count++] = 3;
+                    if (count == 0) { stack.Pop(); continue; }
 
-                    int[] n = next[rand.Next(next.Count)];
-                    if (n[2] == 1) right[cell[0], cell[1]] = false;
-                    if (n[2] == -1) right[n[0], n[1]] = false;
-                    if (n[3] == 1) up[cell[0], cell[1]] = false;
-                    if (n[3] == -1) up[n[0], n[1]] = false;
-                    seen[n[0], n[1]] = true;
-                    stack.Push(new[] { n[0], n[1] });
+                    int ni = ci, nj = cj;
+                    switch (dirs[rand.Next(count)])
+                    {
+                        case 0: ni = ci + 1; right[ci, cj] = false; break;
+                        case 1: ni = ci - 1; right[ni, nj] = false; break;
+                        case 2: nj = cj + 1; up[ci, cj] = false; break;
+                        default: nj = cj - 1; up[ni, nj] = false; break;
+                    }
+                    seen[ni, nj] = true;
+                    stack.Push(ni * ny + nj);
                 }
 
                 List<Curve> lines = new List<Curve>();

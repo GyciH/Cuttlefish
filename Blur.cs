@@ -27,9 +27,9 @@ namespace Cuttlefish
         protected override void RegisterInputParams(GH_Component.GH_InputParamManager pManager)
         {
             pManager.AddPointParameter("Points", "P", "The points to blur.", GH_ParamAccess.tree);
-            pManager.AddNumberParameter("BlurX", "Bx", "Factor X of blur.", GH_ParamAccess.item, 1.0);
-            pManager.AddNumberParameter("BlurY", "By", "Factor Y of blur.", GH_ParamAccess.item, 1.0);
-            pManager.AddNumberParameter("BlurZ", "Bz", "Factor Z of blur.", GH_ParamAccess.item, 0);
+            pManager.AddNumberParameter("BlurX", "Bx", "Maximum displacement along X, in model units (each point moves by up to half of it either way). The default of 1 depends on the model scale.", GH_ParamAccess.item, 1.0);
+            pManager.AddNumberParameter("BlurY", "By", "Maximum displacement along Y, in model units (each point moves by up to half of it either way). The default of 1 depends on the model scale.", GH_ParamAccess.item, 1.0);
+            pManager.AddNumberParameter("BlurZ", "Bz", "Maximum displacement along Z, in model units (each point moves by up to half of it either way).", GH_ParamAccess.item, 0);
             pManager.AddIntegerParameter("Seed", "S", "The seed of the random draw.", GH_ParamAccess.item, 0);
         }
 

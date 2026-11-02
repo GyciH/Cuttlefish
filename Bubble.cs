@@ -27,7 +27,7 @@ namespace Cuttlefish
         protected override void RegisterInputParams(GH_Component.GH_InputParamManager pManager)
         {
             pManager.AddPointParameter("Points", "P", "The centers of the bubbles.", GH_ParamAccess.tree);
-            pManager.AddNumberParameter("Factor", "F", "The radius as a factor of half the distance to the nearest point (1 = bubbles touch).", GH_ParamAccess.item, 1);
+            pManager.AddNumberParameter("Factor", "F", "The radius as a factor of half the distance to the nearest point. With 1, two points that are each other's nearest get touching bubbles; other bubbles can stay apart.", GH_ParamAccess.item, 1);
         }
 
         /// <summary>
