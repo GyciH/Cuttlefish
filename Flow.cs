@@ -24,7 +24,7 @@ namespace Cuttlefish
         {
             pManager.AddPointParameter("Seeds", "P", "The start points of the streamlines.", GH_ParamAccess.list);
             pManager.AddCurveParameter("Guides", "G", "The curves the flow follows.", GH_ParamAccess.list);
-            pManager.AddNumberParameter("Step", "St", "The length of one step.", GH_ParamAccess.item, 1);
+            pManager.AddNumberParameter("Step", "St", "The length of one step, in model units. The default of 1 depends on the model scale: choose it from the size of the guides.", GH_ParamAccess.item, 1);
             pManager.AddIntegerParameter("Count", "N", "The number of steps of each streamline.", GH_ParamAccess.item, 50);
             pManager.AddRectangleParameter("Rectangle", "R", "Optional boundary: streamlines stop when they leave it.", GH_ParamAccess.item);
             pManager[4].Optional = true;

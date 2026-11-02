@@ -24,10 +24,6 @@
   </PropertyGroup>
   
   <ItemGroup>
-    <Compile Remove="GridGenerator.cs" />
-  </ItemGroup>
-  
-  <ItemGroup>
     <None Remove="Exemples.pdf" />
     <None Remove="voronoi.txt" />
   </ItemGroup>
