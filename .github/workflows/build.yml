@@ -1,0 +1,29 @@
+# Compile Cuttlefish à chaque push et pull request : un commit qui casse la compilation se voit
+# avant d'arriver sur master. Pas de tests : le dépôt n'en a pas, les composants s'essaient dans
+# Grasshopper.
+#
+# MSBuild de Visual Studio, pas `dotnet build` : en net48, dotnet build échoue sur les ressources
+# (.resx, MSB3822 / MSB3823). C'est aussi ce qu'on lance sur le poste de développement.
+# La sortie va dans bin/ du dépôt : le BaseOutputPath du .csproj vise le dossier Libraries de
+# Grasshopper du poste de développement, qui n'existe pas ici.
+name: Compilation
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+
+jobs:
+  compiler:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: microsoft/setup-msbuild@v2
+      - name: Compiler (Release)
+        run: msbuild Cuttlefish.csproj -restore -p:Configuration=Release -p:BaseOutputPath=bin\ -v:minimal
+      - name: Vérifier le .gha
+        shell: pwsh
+        run: |
+          $gha = Get-ChildItem -Recurse -Path bin -Filter Cuttlefish.gha
+          if (-not $gha) { throw "Cuttlefish.gha absent après la compilation." }
+          $gha | Format-Table FullName, Length
