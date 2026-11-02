@@ -1,4 +1,5 @@
 ﻿using GH_IO.Types;
+using Grasshopper;
 using Grasshopper.Kernel;
 using Grasshopper.Kernel.Data;
 using Grasshopper.Kernel.Parameters.Hints;
@@ -50,13 +51,12 @@ namespace Cuttlefish
 
             List<Rectangle3d> rectangles = new List<Rectangle3d>();
             Grasshopper.Kernel.Data.GH_Structure<GH_Point> points;
-            List<Polyline> poliCells = new List<Polyline>();
-            List<List<Polyline>> poliCellsTree = new List<List<Polyline>>();
+            // Une branche par groupe de points (par rectangle), comme la sortie le déclare.
+            // Avant, toutes les cellules sortaient en une seule liste.
+            DataTree<Polyline> poliCellsTree = new DataTree<Polyline>();
 
-            DA.GetDataList(0, rectangles);
-            DA.GetDataTree(1, out points);
-
-            
+            if (!DA.GetDataList(0, rectangles)) return;
+            if (!DA.GetDataTree(1, out points)) return;
 
             var groups = points.Paths
                 .Select((path, index) => new { Path = path, Index = index })
@@ -65,6 +65,12 @@ namespace Cuttlefish
 
             foreach (var group in groups)
             {
+                if (idRect >= rectangles.Count)
+                {
+                    AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "More point groups than rectangles: the extra groups were skipped.");
+                    break;
+                }
+
                 var ids = group
                     .Select(x => x.Index)
                     .ToList();
@@ -74,13 +80,13 @@ namespace Cuttlefish
                 {
                     for (int j = 0; j < points[ids[i]].Count; j ++)
                     {
-                        currentPoints.Add(points[ids[i]][j].Value);
+                        if (points[ids[i]][j] != null)
+                            currentPoints.Add(points[ids[i]][j].Value);
                     }
-                    
                 }
 
                 Rectangle3d rect = rectangles[idRect];
-
+                GH_Path branche = new GH_Path(idRect);
                 idRect ++;
 
                 List<Point3d> vertex = new List<Point3d>();
@@ -91,14 +97,14 @@ namespace Cuttlefish
                 }
 
                 Line bisector;
-                List<Point3d> sites = new List<Point3d>(ids.Count);
                 List<List<Point3d>> cells = new List<List<Point3d>>();
 
-
-                for (int i = 0; i < currentPoints.Count - 1; i++)
+                // Tous les points, le dernier compris : les bornes à Count - 1 laissaient le
+                // dernier point sans cellule, et ses voisins débordaient sur sa place.
+                for (int i = 0; i < currentPoints.Count; i++)
                 {
                     List<Point3d> currentCell = new List<Point3d>(vertex);
-                    for (int j = 0; j < currentPoints.Count - 1; j++)
+                    for (int j = 0; j < currentPoints.Count; j++)
                     {
 
                         if (i == j) { continue; }
@@ -114,7 +120,7 @@ namespace Cuttlefish
                     cells.Add(currentCell);
 
                 }
-                
+
                 foreach (List<Point3d> ver in cells)
                 {
                     if (ver.Count > 2)
@@ -122,13 +128,11 @@ namespace Cuttlefish
                         if (!ver[0].EpsilonEquals(ver[ver.Count - 1], 1e-6))
                             ver.Add(ver[0]);
                     }
-                    Polyline poli = new Polyline(ver);
-                    poliCells.Add(poli);
+                    poliCellsTree.Add(new Polyline(ver), branche);
                 }
-                poliCellsTree.Add(poliCells);
             }
 
-            DA.SetDataList(0, poliCells);
+            DA.SetDataTree(0, poliCellsTree);
         
 
         Point3d MidOf(Point3d A, Point3d B)
@@ -172,13 +176,20 @@ namespace Cuttlefish
         {
             List<Point3d> newCell = new List<Point3d>();
 
+            // Un sommet SUR la médiatrice compte comme dedans. Avec un test strict (> 0), il
+            // était jeté puis remplacé par deux intersections confondues avec lui : des
+            // arêtes de longueur nulle (8 sur une grille 4 × 4). La marge suit l'échelle
+            // du produit vectoriel (longueur de la médiatrice × distance).
+            double marge = 1e-9 * Math.Max(1.0, (bisector.To - bisector.From).Length);
+            double sens = Math.Sign(referenceSide);
+
             int nbVertex = polygon.Count;
             for (int k = 0; k < nbVertex; k++)
             {
                 double current = ProdVectoriel(polygon[k % nbVertex], bisector);
                 double next = ProdVectoriel(polygon[(k + 1) % nbVertex], bisector);
-                bool currentInside = current * referenceSide > 0;
-                bool nextInside = next * referenceSide > 0;
+                bool currentInside = current * sens >= -marge;
+                bool nextInside = next * sens >= -marge;
 
                 if (currentInside && nextInside)
                 {
@@ -199,7 +210,20 @@ namespace Cuttlefish
                 }
             }
 
-            return newCell;
+            return SansDoublons(newCell);
+        }
+
+        // Retire les sommets confondus avec le précédent (dernier et premier compris) : un
+        // sommet sur la médiatrice, dedans, donne aussi l'intersection de son arête sortante.
+        List<Point3d> SansDoublons(List<Point3d> cell)
+        {
+            var propre = new List<Point3d>(cell.Count);
+            foreach (var p in cell)
+                if (propre.Count == 0 || !p.EpsilonEquals(propre[propre.Count - 1], 1e-9))
+                    propre.Add(p);
+            while (propre.Count > 1 && propre[0].EpsilonEquals(propre[propre.Count - 1], 1e-9))
+                propre.RemoveAt(propre.Count - 1);
+            return propre;
 
         }
         }

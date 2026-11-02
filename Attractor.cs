@@ -76,6 +76,9 @@ namespace Cuttlefish
 
                     foreach (GH_Point ghPt in branch)
                     {
+                        // Un point vide (null dans l'arbre, après un Cull par exemple) faisait
+                        // planter tout le composant. Il est ignoré, comme dans Voronoi.
+                        if (ghPt == null) continue;
                         Point3d pt = ghPt.Value;
 
                         Vector3d valVec = Vector3d.Zero;

@@ -28,6 +28,9 @@ namespace Cuttlefish
         {
             pManager.AddPointParameter("Points", "P", "Points to use in deisgn.", GH_ParamAccess.tree);
             pManager.AddNumberParameter("Radius", "R", "Radius to apply in curves.", GH_ParamAccess.item);
+            // Ajoutée en dernier, avec une valeur par défaut : les définitions .gh déjà
+            // câblées gardent leurs fils et se rouvrent sans rien changer.
+            pManager.AddIntegerParameter("Seed", "S", "The seed of the random draw.", GH_ParamAccess.item, 0);
         }
 
         /// <summary>
@@ -46,13 +49,22 @@ namespace Cuttlefish
         {
             Grasshopper.Kernel.Data.GH_Structure<GH_Point> points;
             double radius = 0;
-            DA.GetDataTree(0, out points);
-            DA.GetData(1, ref radius);
+            if (!DA.GetDataTree(0, out points)) return;
+            if (!DA.GetData(1, ref radius)) return;
+            int seed = 0;
+            DA.GetData(2, ref seed);
 
-            List<int> ids = new List<int> { -1, 0, 0, 1 };
+            // Un pas vers la rangée précédente une fois sur trois, sinon on reste : c'est
+            // ce que Dune a toujours dessiné (le tirage Next(0, Count - 1) excluait le +1 de
+            // l'ancienne liste { -1, 0, 0, 1 }). L'errance dans les deux sens est Wander.
+            List<int> ids = new List<int> { -1, 0, 0 };
             List<Curve> curves = new List<Curve>();
 
-            Random rand = new Random();
+            // Graine en entrée : le même dessin à chaque calcul, et un autre en changeant S.
+            // Sans graine, chaque recalcul de la définition redessinait des dunes différentes.
+            Random rand = new Random(seed);
+            double tolerance = DocumentTolerance();
+            double angle = DocumentAngleTolerance();
 
             for (int i = 1; i < points.PathCount; i++)
             {
@@ -60,20 +72,25 @@ namespace Cuttlefish
                 List<Point3d> pointList = new List<Point3d>();
                 for (int j = 0; j < points.Branches[i].Count; j++)
                 {
-                    int offset = ids[rand.Next(0, ids.Count - 1)];
-                    pointList.Add( points.Branches[i + offset][j].Value);
+                    int offset = ids[rand.Next(0, ids.Count)];
+                    var branche = points.Branches[i + offset];
+                    // Rangée précédente plus courte, ou point vide : on reste sur la rangée.
+                    GH_Point pt = j < branche.Count && branche[j] != null ? branche[j] : points.Branches[i][j];
+                    if (pt == null) continue;
+                    pointList.Add(pt.Value);
                 }
 
-                for (int j = 0; j < points.Branches[i].Count - 1; j++)
+                for (int j = 0; j < pointList.Count - 1; j++)
                 {
                     lines.Add(new LineCurve( pointList[j], pointList[j + 1]));
                 }
-                
-                Curve poly = PolylineCurve.JoinCurves(lines)[0];
+                if (lines.Count == 0) continue;
 
+                Curve[] joined = PolylineCurve.JoinCurves(lines);
+                if (joined == null || joined.Length == 0) continue;
 
-
-                curves.Add(Curve.CreateFilletCornersCurve(poly, radius, RhinoDoc.ActiveDoc.ModelAbsoluteTolerance, RhinoDoc.ActiveDoc.ModelAngleToleranceDegrees));
+                Curve fillet = Curve.CreateFilletCornersCurve(joined[0], radius, tolerance, angle);
+                if (fillet != null) curves.Add(fillet);
             }
 
 
