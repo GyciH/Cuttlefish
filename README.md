@@ -27,7 +27,7 @@ The components follow the order of the work.
 | Wander | Filleted polylines jumping between neighbouring rows | Points, Radius, Seed |
 | Lining | One curve per row of points, sharp or smooth | Points, Line type, Rectangle |
 | Meshing | A zigzag between each pair of rows; together they form a net, sharp or smooth | Points, Line type, Rectangle |
-| Dune | Filleted polylines that step at random towards the previous row | Points, Radius |
+| Dune | Filleted polylines that step at random towards the previous row | Points, Radius, Seed |
 | Contour | Contour lines of the distance to attractor curves or points | Points, Attractors, Levels |
 | Flow | Streamlines following guide curves | Seeds, Guides, Step, Count |
 | Spiral | A spiral through the rings of a CircularGrid | Points |
