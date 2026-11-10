@@ -62,6 +62,7 @@ namespace Cuttlefish
                 .Select((path, index) => new { Path = path, Index = index })
                 .GroupBy(p => p.Path[0]);
             int idRect = 0;
+            int sansCellule = 0;
 
             foreach (var group in groups)
             {
@@ -89,11 +90,21 @@ namespace Cuttlefish
                 GH_Path branche = new GH_Path(idRect);
                 idRect ++;
 
+                // Tout se calcule en 2D dans le plan du rectangle : les cellules restent planes
+                // quel que soit le Z des points, et suivent un rectangle inclinÃ©.
+                Plane plan = rect.Plane;
+                Func<Point3d, Point3d> local = pt =>
+                {
+                    plan.RemapToPlaneSpace(pt, out Point3d q);
+                    return new Point3d(q.X, q.Y, 0);
+                };
+                currentPoints = currentPoints.Select(local).ToList();
+
                 List<Point3d> vertex = new List<Point3d>();
 
                 for (int i = 0; i < 4; i++)
                 {
-                    vertex.Add(rect.Corner(i));
+                    vertex.Add(local(rect.Corner(i)));
                 }
 
                 Line bisector;
@@ -128,9 +139,14 @@ namespace Cuttlefish
                         if (!ver[0].EpsilonEquals(ver[ver.Count - 1], 1e-6))
                             ver.Add(ver[0]);
                     }
-                    poliCellsTree.Add(new Polyline(ver), branche);
+                    // Un point trop loin du rectangle n'y a aucune cellule.
+                    if (ver.Count < 3) { sansCellule++; continue; }
+                    poliCellsTree.Add(new Polyline(ver.Select(v => plan.PointAt(v.X, v.Y))), branche);
                 }
             }
+
+            if (sansCellule > 0)
+                AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, sansCellule + " point(s) have no cell inside the rectangle.");
 
             DA.SetDataTree(0, poliCellsTree);
         
