@@ -52,46 +52,46 @@ namespace Cuttlefish
             int seed = 0;
             DA.GetData(2, ref seed);
 
-            List<List<Point3d>> rows = points.Branches
-                .Select(branch => branch.Where(p => p != null).Select(p => p.Value).ToList())
-                .ToList();
-
             List<int> ids = new List<int> { -1, 0, 0, 1 };
             List<Curve> curves = new List<Curve>();
             Random rand = new Random(seed);
             double tolerance = DocumentTolerance();
             bool shortNeighbour = false;
 
-            for (int i = 1; i < rows.Count; i++)
+            // Une grille à la fois : une courbe ne saute jamais vers la grille d'un autre rectangle.
+            foreach (var rows in Outils.Groupes(points))
             {
-                if (rows[i].Count < 2)
+                for (int i = 1; i < rows.Count; i++)
                 {
-                    AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "A row with less than 2 points was skipped.");
-                    continue;
-                }
-
-                List<Point3d> pointList = new List<Point3d>();
-                for (int j = 0; j < rows[i].Count; j++)
-                {
-                    int offset = ids[rand.Next(0, ids.Count)];
-                    int row = Math.Max(0, Math.Min(rows.Count - 1, i + offset));
-
-                    // Rangée voisine trop courte : on reste sur la rangée courante.
-                    if (j >= rows[row].Count)
+                    if (rows[i].Count < 2)
                     {
-                        row = i;
-                        shortNeighbour = true;
+                        AddRuntimeMessage(GH_RuntimeMessageLevel.Warning, "A row with less than 2 points was skipped.");
+                        continue;
                     }
-                    pointList.Add(rows[row][j]);
+
+                    List<Point3d> pointList = new List<Point3d>();
+                    for (int j = 0; j < rows[i].Count; j++)
+                    {
+                        int offset = ids[rand.Next(0, ids.Count)];
+                        int row = Math.Max(0, Math.Min(rows.Count - 1, i + offset));
+
+                        // Rangée voisine trop courte : on reste sur la rangée courante.
+                        if (j >= rows[row].Count)
+                        {
+                            row = i;
+                            shortNeighbour = true;
+                        }
+                        pointList.Add(rows[row][j]);
+                    }
+
+                    Polyline poly = new Polyline(pointList);
+                    poly.DeleteShortSegments(tolerance);
+                    if (poly.Count < 2) continue;
+
+                    Curve fillet = Curve.CreateFilletCornersCurve(poly.ToPolylineCurve(), rayon, tolerance, DocumentAngleTolerance());
+                    if (fillet != null)
+                        curves.Add(fillet);
                 }
-
-                Polyline poly = new Polyline(pointList);
-                poly.DeleteShortSegments(tolerance);
-                if (poly.Count < 2) continue;
-
-                Curve fillet = Curve.CreateFilletCornersCurve(poly.ToPolylineCurve(), rayon, tolerance, DocumentAngleTolerance());
-                if (fillet != null)
-                    curves.Add(fillet);
             }
 
             if (shortNeighbour)

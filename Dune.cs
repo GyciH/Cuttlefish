@@ -6,6 +6,7 @@ using Rhino;
 using Rhino.Geometry;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Cuttlefish
 {
@@ -66,31 +67,40 @@ namespace Cuttlefish
             double tolerance = DocumentTolerance();
             double angle = DocumentAngleTolerance();
 
-            for (int i = 1; i < points.PathCount; i++)
+            // Une grille à la fois : une courbe ne saute jamais vers la grille d'un autre rectangle.
+            var groupes = Enumerable.Range(0, points.PathCount).GroupBy(b => points.Paths[b][0]);
+
+            foreach (var groupe in groupes)
             {
-                List<Curve> lines = new List<Curve>();
-                List<Point3d> pointList = new List<Point3d>();
-                for (int j = 0; j < points.Branches[i].Count; j++)
+                List<int> branches = groupe.ToList();
+
+                for (int i = 1; i < branches.Count; i++)
                 {
-                    int offset = ids[rand.Next(0, ids.Count)];
-                    var branche = points.Branches[i + offset];
-                    // Rangée précédente plus courte, ou point vide : on reste sur la rangée.
-                    GH_Point pt = j < branche.Count && branche[j] != null ? branche[j] : points.Branches[i][j];
-                    if (pt == null) continue;
-                    pointList.Add(pt.Value);
+                    var courante = points.Branches[branches[i]];
+                    List<Curve> lines = new List<Curve>();
+                    List<Point3d> pointList = new List<Point3d>();
+                    for (int j = 0; j < courante.Count; j++)
+                    {
+                        int offset = ids[rand.Next(0, ids.Count)];
+                        var branche = points.Branches[branches[i + offset]];
+                        // Rangée précédente plus courte, ou point vide : on reste sur la rangée.
+                        GH_Point pt = j < branche.Count && branche[j] != null ? branche[j] : courante[j];
+                        if (pt == null) continue;
+                        pointList.Add(pt.Value);
+                    }
+
+                    for (int j = 0; j < pointList.Count - 1; j++)
+                    {
+                        lines.Add(new LineCurve( pointList[j], pointList[j + 1]));
+                    }
+                    if (lines.Count == 0) continue;
+
+                    Curve[] joined = PolylineCurve.JoinCurves(lines);
+                    if (joined == null || joined.Length == 0) continue;
+
+                    Curve fillet = Curve.CreateFilletCornersCurve(joined[0], radius, tolerance, angle);
+                    if (fillet != null) curves.Add(fillet);
                 }
-
-                for (int j = 0; j < pointList.Count - 1; j++)
-                {
-                    lines.Add(new LineCurve( pointList[j], pointList[j + 1]));
-                }
-                if (lines.Count == 0) continue;
-
-                Curve[] joined = PolylineCurve.JoinCurves(lines);
-                if (joined == null || joined.Length == 0) continue;
-
-                Curve fillet = Curve.CreateFilletCornersCurve(joined[0], radius, tolerance, angle);
-                if (fillet != null) curves.Add(fillet);
             }
 
 
