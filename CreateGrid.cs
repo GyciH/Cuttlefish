@@ -44,47 +44,66 @@ namespace Cuttlefish
         /// <param name="DA">The DA object is used to retrieve from inputs and store in outputs.</param>
         protected override void SolveInstance(IGH_DataAccess DA)
         {
-            List<Rectangle3d> rectangles = new List<Rectangle3d>();            
+            List<Rectangle3d> rectangles = new List<Rectangle3d>();
             double ecartX = 10;
             double ecartY = 10;
 
-            DA.GetDataList(0, rectangles);
+            if (!DA.GetDataList(0, rectangles)) return;
             DA.GetData(1, ref ecartX);
             DA.GetData(2, ref ecartY);
 
-            Grasshopper.DataTree<Point3d> pointsTree = new Grasshopper.DataTree<Point3d>();
+            if (ecartX <= 0 || ecartY <= 0)
+            {
+                AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "X and Y must be greater than 0.");
+                return;
+            }
 
+            Grasshopper.DataTree<Point3d> pointsTree = new Grasshopper.DataTree<Point3d>();
 
             for (int p = 0; p < rectangles.Count; p++)
             {
-                List<List<Point3d>> points = new List<List<Point3d>>();
-                int divisionX = (int)(rectangles[p].Width / ecartX);
-                int divisionY = (int)(rectangles[p].Height / ecartY);
+                Rectangle3d rect = rectangles[p];
+                // Width et Height sont négatifs si le rectangle a un intervalle inversé.
+                double colonnes = Math.Floor(Math.Abs(rect.Width) / ecartX);
+                double rangees = Math.Floor(Math.Abs(rect.Height) / ecartY);
 
-                if (divisionX % 2 != 0)
+                // Une cellule très petite demanderait des milliards de points et figerait Rhino.
+                if (colonnes * rangees > MaxCellules)
                 {
-                    divisionX++;
+                    AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "X and Y are too small for this rectangle: more than " + MaxCellules + " cells.");
+                    continue;
                 }
-                if (divisionY % 2 != 0)
-                {
-                    divisionY++;
-                }
+
+                int divisionX = PairSuperieur((int)colonnes);
+                int divisionY = PairSuperieur((int)rangees);
+
+                // Pas de la grille le long des côtés du rectangle : la grille suit son plan,
+                // qu'il soit tourné ou hors du plan XY.
+                Point3d origine = rect.Corner(0);
+                Vector3d pasX = (rect.Corner(1) - origine) / divisionX;
+                Vector3d pasY = (rect.Corner(3) - origine) / divisionY;
 
                 for (int i = 0; i < divisionX + 1; i++)
                 {
-                    points.Add(new List<Rhino.Geometry.Point3d>());
                     GH_Path path = new GH_Path(p, i);
+                    pointsTree.EnsurePath(path);
                     for (int j = 0; j < divisionY + 1; j++)
                     {
-                        points[i].Add(new Rhino.Geometry.Point3d((((rectangles[p].Width / divisionX) * i) + rectangles[p].Corner(0).X), (((rectangles[p].Height / divisionY) * j) + rectangles[p].Corner(0).Y), 0));
+                        pointsTree.Add(origine + pasX * i + pasY * j, path);
                     }
-                    pointsTree.AddRange(points[i], path);
                 }
-                points.Clear();
             }
-            DA.SetDataTree(0, pointsTree);               
-            
+            DA.SetDataTree(0, pointsTree);
         }
+
+        // Nombre de divisions pair et non nul : une cellule plus grande que le côté donne 2 divisions.
+        private static int PairSuperieur(int n)
+        {
+            if (n < 2) return 2;
+            return n % 2 != 0 ? n + 1 : n;
+        }
+
+        private const double MaxCellules = 4000000;
 
         /// <summary>
         /// Provides an Icon for the component.
