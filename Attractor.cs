@@ -58,6 +58,12 @@ namespace Cuttlefish
             DA.GetData(2, ref fA);
             DA.GetData(3, ref dA);
 
+            if (dA <= 0)
+            {
+                AddRuntimeMessage(GH_RuntimeMessageLevel.Error, "Attraction Distance must be greater than 0.");
+                return;
+            }
+
             var groups = points.Paths
                 .Select((path, index) => new { Path = path, Index = index })
                 .GroupBy(p => p.Path[0]);
