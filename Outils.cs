@@ -34,6 +34,33 @@ namespace Cuttlefish
             return groupes;
         }
 
+        /// <summary>
+        /// Reporte sur l'avant-dernier point de chaque rangÃ©e (sauf la derniÃ¨re) l'Ã©cart des deux
+        /// premiers : la courbe finit comme elle commence. Travaille sur les listes de Groupes,
+        /// des copies : les points d'entrÃ©e du composant ne sont pas touchÃ©s.
+        /// </summary>
+        public static void AjusterFinRangees(List<List<Point3d>> rows)
+        {
+            for (int i = 0; i < rows.Count - 1; i++)
+            {
+                List<Point3d> r = rows[i];
+                if (r.Count < 2) continue;
+                r[r.Count - 2] = r[r.Count - 1] - (r[1] - r[0]);
+            }
+        }
+
+        /// <summary>
+        /// Direction gÃ©nÃ©rale des rangÃ©es d'un groupe, utilisÃ©e comme tangente aux extrÃ©mitÃ©s :
+        /// elle suit une grille tournÃ©e. Axe Y si les rangÃ©es n'ont pas de direction.
+        /// </summary>
+        public static Vector3d DirectionRangees(List<List<Point3d>> rows)
+        {
+            Vector3d somme = Vector3d.Zero;
+            foreach (List<Point3d> r in rows)
+                if (r.Count >= 2) somme += r[r.Count - 1] - r[0];
+            return somme.Unitize() ? somme : Vector3d.YAxis;
+        }
+
         public static Point3d Milieu(Point3d a, Point3d b)
         {
             return new Point3d((a.X + b.X) / 2, (a.Y + b.Y) / 2, (a.Z + b.Z) / 2);

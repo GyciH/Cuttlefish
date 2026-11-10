@@ -29,7 +29,9 @@ namespace Cuttlefish
         {
             pManager.AddPointParameter("Points", "P", "The points to draw lines.", GH_ParamAccess.tree);
             pManager.AddBooleanParameter("Line Type", "L", "Sharp or smooth line.", GH_ParamAccess.item, true);
-            pManager.AddRectangleParameter("Rectangle", "R", "The rectangle to draw lines in.", GH_ParamAccess.list);
+            // Jamais lue par le composant : facultative, et conservÃ©e pour que les .gh dÃ©jÃ  cÃ¢blÃ©s gardent leurs fils.
+            pManager.AddRectangleParameter("Rectangle", "R", "Not used. Kept so that existing definitions stay wired.", GH_ParamAccess.list);
+            pManager[2].Optional = true;
         }
 
         /// <summary>
@@ -51,80 +53,41 @@ namespace Cuttlefish
 
             var result = new List<Curve>();
 
-            DA.GetDataTree(0, out points);
+            if (!DA.GetDataTree(0, out points)) return;
             DA.GetData(1, ref lineType);
 
-            var groups = points.Paths
-                .Select((path, index) => new {Path = path, Index = index})
-                .GroupBy(p => p.Path[0]);
-
-            foreach (var group in groups)
+            foreach (var rows in Outils.Groupes(points))
             {
-                var ids = group
-                    .Select(x => x.Index)
-                    .ToList();
+                Outils.AjusterFinRangees(rows);
+                Vector3d direction = Outils.DirectionRangees(rows);
 
-
-                for (int i = 0; i < ids.Count - 1; i++)
+                for (int i = 0; i < rows.Count - 1; i++)
                 {
-                    int branchIndex = ids[i];
-                    
-                    Vector3d vect = new Vector3d( points[branchIndex][1].Value - points[branchIndex][0].Value);
-
-                    points[i][points.Branches[i].Count - 2].Value = new Point3d( points[i][points.Branches[i].Count - 1].Value - vect);
-                }
-
-                for (int i = 0; i < ids.Count - 1; i++)
-                {
-                    var rowA = points.Branches[ids[i]];
-                    var rowB = points.Branches[ids[i + 1]];
+                    var rowA = rows[i];
+                    var rowB = rows[i + 1];
 
                     int count = Math.Min(rowA.Count, rowB.Count);
-                   
+
+                    // Zigzag entre les deux rangÃ©es, en sens alternÃ© d'une paire Ã  l'autre.
                     List<Point3d> pointList = new List<Point3d>();
-
-
-                    int j = i;
-                    if (i % 2 == 0)
+                    var pairs = i % 2 == 0 ? rowA : rowB;
+                    var impairs = i % 2 == 0 ? rowB : rowA;
+                    for (int k = 0; k < count; k++)
                     {
-                        for (int k = 0; k < count; k+=2)
-                        {
-
-                            pointList.Add(rowA[k].Value);
-
-                            if (k+1 < count)
-                            {
-                                pointList.Add(rowB[k + 1].Value);
-                            }
-                        }
-                    }
-                    else
-                    {
-                        for (int k = 0; k < count; k += 2)
-                        {
-                            pointList.Add(rowB[k].Value);
-
-                            if (k + 1 < count)
-                                pointList.Add(rowA[k + 1].Value);
-                        }
+                        pointList.Add(k % 2 == 0 ? pairs[k] : impairs[k]);
                     }
 
                     if (pointList.Count < 2)
                         continue;
 
-                    
                     if (lineType)
                     {
-                        result.Add(new NurbsCurve((NurbsCurve)Curve.CreateInterpolatedCurve(pointList, 3, CurveKnotStyle.Uniform, Vector3d.YAxis, Vector3d.YAxis)));
+                        Curve courbe = Curve.CreateInterpolatedCurve(pointList, 3, CurveKnotStyle.Uniform, direction, direction);
+                        if (courbe != null) result.Add(courbe);
                     }
-                    if (!lineType)
+                    else
                     {
-                        Polyline line = new Polyline();
-                        foreach (Point3d point in pointList)
-                        {
-                            line.Add(point);
-                        }
-                        result.Add(line.ToNurbsCurve());
+                        result.Add(new Polyline(pointList).ToNurbsCurve());
                     }
                 }
             }
