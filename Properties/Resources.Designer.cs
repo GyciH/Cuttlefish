@@ -268,5 +268,19 @@ namespace Cuttlefish.Properties {
                 return ((System.Drawing.Bitmap)(obj));
             }
         }
+        internal static System.Drawing.Bitmap SurfaceRectangle {
+            get {
+                object obj = ResourceManager.GetObject("SurfaceRectangle", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        internal static System.Drawing.Bitmap MapToSurface {
+            get {
+                object obj = ResourceManager.GetObject("MapToSurface", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
     }
 }

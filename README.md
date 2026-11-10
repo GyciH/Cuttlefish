@@ -2,7 +2,7 @@
 
 Cuttlefish draws graphic patterns in Grasshopper, from a grid of points to the final curves.
 
-It is a set of 20 Grasshopper components for drawing graphic patterns: mazes, pebbles, weaves, contour lines, spirals, Voronoi cells and more. Every pattern starts from simple geometry, a rectangle or a circle, and ends as plain Rhino curves that can be baked, offset, cut, engraved or plotted.
+It is a set of 22 Grasshopper components for drawing graphic patterns: mazes, pebbles, weaves, contour lines, spirals, Voronoi cells and more. Every pattern starts from simple geometry, a rectangle or a circle, and ends as plain Rhino curves that can be baked, offset, cut, engraved or plotted.
 
 ## Components
 
@@ -32,6 +32,8 @@ The components follow the order of the work.
 | Flow | Streamlines following guide curves | Seeds, Guides, Step, Count |
 | Spiral | A spiral through the rings of a CircularGrid | Points |
 | Weave | Two sets of curves woven over and under each other | Curves A, Curves B, Gap |
+
+**On a surface.** SurfaceRectangle gives a flat rectangle with the mean size of a surface. Draw your pattern in it with any component above, then MapToSurface places the points and curves on the surface, X along U and Y along V. A surface closed in one direction, like a cylinder, closes the pattern too.
 
 Components that use randomness take a Seed input: the same seed gives the same pattern, so a result can be found again and shared.
 
