@@ -64,90 +64,106 @@ namespace Cuttlefish
             var result = new Grasshopper.DataTree<Point3d>();
             Random rand = new Random(seed);
 
+            // Décalages fixes des bords, identiques quel que soit le seed.
+            // Valeurs entre 25 et 75, centrées sur 50, pour que les jonctions se voient moins.
+            // La liste se répète : le nombre de points par colonne n'est pas limité.
+            const double amplitudeBord = 1;
+            double[] valeursBord = { 26, 41, 63, 74, 29, 74, 53, 72, 61, 26, 43, 26, 63, 43, 57, 56, 51, 34, 44, 33 };
+            Func<int, double> bord = n => (valeursBord[n % valeursBord.Length] / 100 - 0.5) * amplitudeBord;
+            bool irregulier = false;
+
             foreach (var group in groups)
             {
                 var ids = group
                     .Select(id => id.Index)
-                    .ToList();                    
-                    
+                    .ToList();
+
+                // Le raccord des bords n'a de sens que sur une grille complète. Sinon (CircularGrid,
+                // branche unique, point vide) chaque point bouge au hasard et les vides sont ignorés.
+                if (!EstGrille(points, ids))
+                {
+                    irregulier = true;
+                    foreach (int id in ids)
+                    {
+                        result.EnsurePath(points.Paths[id]);
+                        foreach (GH_Point ghPt in points.Branches[id])
+                        {
+                            if (ghPt == null) continue;
+                            Point3d pt = ghPt.Value;
+                            result.Add(new Point3d(
+                                pt.X + ((rand.NextDouble() - 0.5) * x),
+                                pt.Y + ((rand.NextDouble() - 0.5) * y),
+                                pt.Z + ((rand.NextDouble() - 0.5) * z)
+                                ), points.Paths[id]);
+                        }
+                    }
+                    continue;
+                }
+
                 Vector3d vect = new Vector3d(points[ids[ids.Count - 1]][0].Value - points[ids[0]][0].Value);
-
-                // Décalages fixes des bords, identiques quel que soit le seed.
-                // Valeurs entre 25 et 75, centrées sur 50, pour que les jonctions se voient moins.
-                const double amplitudeBord = 1;
-                List<double> randJoin = new List<double> { 26, 41, 63, 74, 29, 74, 53, 72, 61, 26, 43, 26, 63, 43, 57, 56, 51, 34, 44, 33 };
-                for (int i = 0; i < randJoin.Count; i++)
-                {
-                    randJoin[i] = 0.5 + (randJoin[i] / 100 - 0.5) * amplitudeBord;
-                }
-
-
-                    
-                int manque = Math.Max(points.PathCount, points.Branches.Count) * 2 - randJoin.Count;
-                manque = (manque + 5) * 2;
-                for (int i = 0; i < manque; i++)
-                {
-                    randJoin.Add(randJoin[i]);
-                }
+                List<Point3d> premiereColonne = new List<Point3d>();
 
                 for (int i = 0; i < ids.Count; i++)
                 {
                     var path = points.Paths[ids[i]];
                     var branch = points.Branches[ids[i]];
 
+                    // La dernière colonne est la copie de la première, à la largeur près.
                     if (i == ids.Count - 1)
                     {
-                        for (int j = 0; j < branch.Count; j++)
+                        foreach (Point3d pt in premiereColonne)
                         {
-                            result.Add(new Point3d(result.Branches[ids[0]][j] + vect), path);
+                            result.Add(pt + vect, path);
                         }
                         continue;
                     }
-                    else
+
+                    for (int j = 0; j < branch.Count; j++)
                     {
-                        for (int j = 0; j < branch.Count; j++)
+                        Point3d pt = branch[j].Value;
+                        Point3d newPt;
+
+                        if (i != 0 && j != 0 && j != branch.Count - 1)
                         {
-                            Point3d pt = branch[j].Value;
-                            Point3d newPt;
-
-                            if (i != 0 && i != points.PathCount - 1 && j != 0 && j != branch.Count - 1)
-                            {
-                                newPt = new Point3d(
-                                    pt.X + ((rand.NextDouble() - 0.5) * x),
-                                    pt.Y + ((rand.NextDouble() - 0.5) * y),
-                                    pt.Z + ((rand.NextDouble() - 0.5) * z)
-                                    );
-                            }
-                            else if (i == 0 || i == points.PathCount - 1)
-                            {
-                                // Le dernier point de la colonne reprend le décalage du premier :
-                                // la première et la dernière ligne restent identiques à la hauteur près.
-                                int k = (j == branch.Count - 1) ? 0 : j;
-                                newPt = new Point3d(
-                                    pt.X + ((randJoin[k] - 0.5) * x),
-                                    pt.Y + ((randJoin[k + 1] - 0.5) * y),
-                                    pt.Z + ((randJoin[k + 2] - 0.5) * z)
-                                    );
-                            }
-                            else if (j == 0 || j == branch.Count - 1)
-                            {
-                                newPt = new Point3d(
-                                    pt.X + ((randJoin[i] - 0.5) * x),
-                                    pt.Y + ((randJoin[i + 1] - 0.5) * y),
-                                    pt.Z + ((randJoin[i + 2] - 0.5) * z)
-                                    );
-                            }
-                            else continue;
-
-                            result.Add(newPt, path);
+                            newPt = new Point3d(
+                                pt.X + ((rand.NextDouble() - 0.5) * x),
+                                pt.Y + ((rand.NextDouble() - 0.5) * y),
+                                pt.Z + ((rand.NextDouble() - 0.5) * z)
+                                );
+                        }
+                        else
+                        {
+                            // La première colonne suit j, et son dernier point reprend le décalage du
+                            // premier ; les autres colonnes suivent i, en bas comme en haut. La première
+                            // et la dernière ligne restent ainsi identiques à la hauteur près.
+                            int k = i != 0 ? i : (j == branch.Count - 1 ? 0 : j);
+                            newPt = new Point3d(
+                                pt.X + (bord(k) * x),
+                                pt.Y + (bord(k + 1) * y),
+                                pt.Z + (bord(k + 2) * z)
+                                );
                         }
 
+                        if (i == 0) premiereColonne.Add(newPt);
+                        result.Add(newPt, path);
                     }
-                    
                 }
-                
             }
+
+            if (irregulier)
+                AddRuntimeMessage(GH_RuntimeMessageLevel.Remark, "Not a complete grid: the points were moved at random, without matching edges.");
+
             DA.SetDataTree(0, result);
+        }
+
+        // Vrai quand le groupe forme une grille complète : au moins 2 colonnes, autant de points
+        // dans chacune, au moins 1 point et aucun point vide.
+        private static bool EstGrille(Grasshopper.Kernel.Data.GH_Structure<GH_Point> points, List<int> ids)
+        {
+            if (ids.Count < 2) return false;
+            int nb = points.Branches[ids[0]].Count;
+            if (nb == 0) return false;
+            return ids.All(id => points.Branches[id].Count == nb && points.Branches[id].All(p => p != null));
         }
 
         /// <summary>
